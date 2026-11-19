@@ -211,3 +211,6 @@ template-codelabs
 # Local backups of outputs (not part of submission)
 backup_cp4/
 backup_*/
+
+# Ghi chú ôn tập cá nhân
+/HUONG_DAN_ON_TAP.md
