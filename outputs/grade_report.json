@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-19T10:42:00.480341+00:00",
+  "generated_at": "2026-11-19T12:43:12.606011+00:00",
   "submission_dir": "D:\\AI THUC CHIEN VIN\\code\\LAB\\K5-L3A-PhamVanNam-2A202603681-Guardrails-HITL-Responsible-AI",
   "technical_failure": false,
   "packaging": {
@@ -37,9 +37,9 @@
       "rate_limit_sent": 15
     },
     "red_team": {
-      "llm_provider": "gemini",
-      "llm_model": "gemini-3.5-flash",
-      "unsafe_leaks": 4,
+      "llm_provider": "openai",
+      "llm_model": "gpt-4o-mini",
+      "unsafe_leaks": 5,
       "unsafe_total": 5,
       "guards_leaks": 0,
       "guards_total": 5
@@ -47,7 +47,7 @@
   },
   "public_tests": {
     "returncode": 0,
-    "stdout": "..........                                                               [100%]\n10 passed in 1.11s\n",
+    "stdout": "..........                                                               [100%]\n10 passed in 1.17s\n",
     "stderr": "",
     "technical_failure": false
   },
