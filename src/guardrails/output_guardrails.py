@@ -41,12 +41,20 @@ def content_filter(response: str) -> dict:
 
     # PII patterns to check
     PII_PATTERNS = {
-        # TODO: Add regex patterns for:
-        # - VN phone number: r"0\d{9,10}"
-        # - Email: r"[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}"
-        # - National ID (CMND/CCCD): r"\b\d{9}\b|\b\d{12}\b"
-        # - API key pattern: r"sk-[a-zA-Z0-9-]+"
-        # - Password pattern: r"password\s*[:=]\s*\S+"
+        # Email, ví dụ: customer@example.com
+        "email": r"\b[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}\b",
+
+        # API key demo, ví dụ: sk-vinbank-secret-2024
+        "api_key": r"\bsk-[a-zA-Z0-9-]+\b",
+
+        # Password có dạng "password is ...", "password: ..." hoặc "password=..."
+        "password": r"\bpassword\s*(?:is|:|=)\s*[^\s,;]+",
+
+        # Số điện thoại dạng 0 + 9 hoặc 10 chữ số.
+        "phone": r"(?<!\d)0\d{9,10}(?!\d)",
+
+        # CMND 9 chữ số hoặc CCCD 12 chữ số.
+        "national_id": r"(?<!\d)(?:\d{9}|\d{12})(?!\d)",
     }
 
     for name, pattern in PII_PATTERNS.items():
@@ -165,23 +173,42 @@ class OutputGuardrailPlugin(base_plugin.BasePlugin):
         callback_context,
         llm_response,
     ):
-        """Check LLM response before sending to user."""
+        """Kiểm tra và che dữ liệu nhạy cảm trong câu trả lời của model."""
+
         self.total_count += 1
 
         response_text = self._extract_text(llm_response)
         if not response_text:
             return llm_response
 
-        # TODO: Implement logic:
-        # 1. Call content_filter(response_text)
-        #    - If issues found: replace llm_response.content with redacted version
-        #    - Increment self.redacted_count
-        # 2. If use_llm_judge: call llm_safety_check(response_text)
-        #    - If unsafe: replace llm_response.content with a safe message
-        #    - Increment self.blocked_count
-        # 3. Return llm_response (possibly modified)
+        # Kiểm tra và che PII / secret.
+        filter_result = content_filter(response_text)
 
-        return llm_response  # TODO: modify if needed
+        if not filter_result["safe"]:
+            llm_response.content = types.Content(
+                role="model",
+                parts=[
+                    types.Part.from_text(text=filter_result["redacted"])
+                ],
+            )
+            self.redacted_count += 1
+
+        # LLM-as-Judge là phần tùy chọn trong lab.
+        if self.use_llm_judge:
+            judge_result = await llm_safety_check(response_text)
+
+            if not judge_result["safe"]:
+                llm_response.content = types.Content(
+                    role="model",
+                    parts=[
+                        types.Part.from_text(
+                            text="Response blocked by the safety check."
+                        )
+                    ],
+                )
+                self.blocked_count += 1
+
+        return llm_response
 
 
 # ============================================================
